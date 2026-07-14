@@ -1,17 +1,9 @@
 "use client";
 
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
-import { SUPABASE_ANON_KEY, SUPABASE_URL, isSupabaseConfigured } from "./config";
+import { createBrowserClient } from "@supabase/ssr";
+import { SUPABASE_ANON_KEY, SUPABASE_URL } from "./config";
 
-let browserClient: SupabaseClient | null = null;
-
-/** Singleton client Supabase untuk Client Components */
-export function getBrowserClient(): SupabaseClient | null {
-  if (!isSupabaseConfigured) return null;
-  if (!browserClient) {
-    browserClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth: { persistSession: false },
-    });
-  }
-  return browserClient;
+/** Client Supabase untuk Client Components (browser). */
+export function getBrowserClient() {
+  return createBrowserClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 }

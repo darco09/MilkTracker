@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import {
-  clearAll,
   deleteLog,
   getChildName,
   insertLog,
@@ -10,8 +9,8 @@ import {
   updateLog,
   type NewMilkLog,
 } from "./repository";
-import { computeNextTime, localInputToIso, todayKey } from "./utils";
-import { CHILD_NAME, VOLUME_TARGET } from "./constants";
+import { computeNextTime, localInputToIso } from "./utils";
+import { VOLUME_TARGET } from "./constants";
 import type { ActionResult, FeedingStatus } from "@/types";
 
 function revalidateAll() {
@@ -157,61 +156,6 @@ export async function deleteFeeding(id: string): Promise<ActionResult> {
 export async function saveChildName(name: string): Promise<ActionResult> {
   const error = await setChildName(name);
   if (error) return { ok: false, error };
-  revalidateAll();
-  return { ok: true };
-}
-
-/** Contoh data satu hari (untuk eksplorasi cepat di mode lokal) */
-export async function seedSampleData(): Promise<ActionResult> {
-  const today = todayKey();
-
-  // pastikan ada nama anak untuk data contoh
-  let childName = await getChildName();
-  if (!childName) {
-    await setChildName(CHILD_NAME);
-    childName = CHILD_NAME;
-  }
-
-  const samples: {
-    time: string;
-    volume: number;
-    status: FeedingStatus;
-    retention?: number;
-    skip_reason?: string;
-    notes?: string;
-  }[] = [
-    { time: "06:00", volume: 120, status: "completed", retention: 12, notes: "Pagi lancar" },
-    { time: "09:00", volume: 90, status: "partial", notes: "Agak rewel" },
-    { time: "12:00", volume: 0, status: "skipped", skip_reason: "Anak muntah" },
-    { time: "15:00", volume: 120, status: "completed", retention: 8 },
-  ];
-
-  for (const s of samples) {
-    const actualIso = localInputToIso(`${today}T${s.time}`);
-    const err = await insertLog({
-      child_name: childName,
-      target_time: actualIso,
-      actual_time: actualIso,
-      next_time: computeNextTime(new Date(actualIso)).toISOString(),
-      volume_target: VOLUME_TARGET,
-      volume_actual: s.volume,
-      retention_checked: s.retention != null,
-      retention_volume: s.retention ?? null,
-      feeding_status: s.status,
-      skip_reason: s.skip_reason ?? null,
-      notes: s.notes ?? null,
-    });
-    if (err) return { ok: false, error: `Gagal seed: ${err}` };
-  }
-
-  revalidateAll();
-  return { ok: true };
-}
-
-/** Hapus semua data */
-export async function clearAllData(): Promise<ActionResult> {
-  const err = await clearAll();
-  if (err) return { ok: false, error: `Gagal menghapus: ${err}` };
   revalidateAll();
   return { ok: true };
 }

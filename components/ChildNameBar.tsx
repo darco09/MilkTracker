@@ -4,7 +4,13 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { saveChildName } from "@/lib/actions";
 
-export default function ChildNameBar({ name }: { name: string }) {
+export default function ChildNameBar({
+  name,
+  email,
+}: {
+  name: string;
+  email?: string;
+}) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(name);
@@ -59,13 +65,18 @@ export default function ChildNameBar({ name }: { name: string }) {
 
   return (
     <div className="flex items-center justify-between rounded-2xl border border-brand-100 bg-white px-4 py-3">
-      <span className="flex items-center gap-2 text-sm font-medium text-brand-800">
-        <span aria-hidden="true">👶</span> {name}
+      <span className="flex min-w-0 flex-col">
+        <span className="flex items-center gap-2 text-sm font-medium text-brand-800">
+          <span aria-hidden="true">👶</span> {name}
+        </span>
+        {email && (
+          <span className="truncate text-xs text-gray-400">{email}</span>
+        )}
       </span>
       <button
         type="button"
         onClick={() => setEditing(true)}
-        className="text-sm font-semibold text-brand-600"
+        className="shrink-0 text-sm font-semibold text-brand-600"
       >
         Ubah nama
       </button>

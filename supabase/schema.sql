@@ -1,10 +1,16 @@
--- LittleCare — skema database untuk Supabase (PostgreSQL)
--- Jalankan di Supabase Dashboard -> SQL Editor
+-- LittleCare — skema database Supabase (PostgreSQL), MULTI-USER
+-- Jalankan di Supabase Dashboard -> SQL Editor.
+-- Tiap user (keluarga) hanya bisa mengakses datanya sendiri (RLS per user_id).
 
 create extension if not exists "pgcrypto";
 
+-- ---------------------------------------------------------------------------
+-- Tabel utama: catatan feeding
+-- ---------------------------------------------------------------------------
 create table if not exists public.milk_logs (
   id                uuid primary key default gen_random_uuid(),
+  user_id           uuid not null default auth.uid()
+                      references auth.users (id) on delete cascade,
   child_name        text        not null,
   target_time       timestamptz not null,
   actual_time       timestamptz not null,
@@ -30,35 +36,36 @@ create table if not exists public.milk_logs (
     )
 );
 
--- Index untuk query per-tanggal & feeding terakhir
-create index if not exists milk_logs_actual_time_idx
-  on public.milk_logs (actual_time desc);
+create index if not exists milk_logs_user_time_idx
+  on public.milk_logs (user_id, actual_time desc);
 
--- Pengaturan aplikasi (single-row). Menyimpan nama anak yang diisi sekali.
+-- ---------------------------------------------------------------------------
+-- Pengaturan per user: nama anak (diisi sekali)
+-- ---------------------------------------------------------------------------
 create table if not exists public.app_settings (
-  id         text primary key default 'app',
+  user_id    uuid primary key default auth.uid()
+               references auth.users (id) on delete cascade,
   child_name text,
   updated_at timestamptz not null default now()
 );
 
--- Aplikasi single-user tanpa login: aktifkan RLS lalu izinkan akses via anon key.
--- (Untuk penggunaan pribadi/internal. Perketat bila diperlukan.)
+-- ---------------------------------------------------------------------------
+-- Row Level Security: setiap user hanya melihat/mengubah barisnya sendiri
+-- ---------------------------------------------------------------------------
 alter table public.milk_logs enable row level security;
-
-drop policy if exists "allow anon full access" on public.milk_logs;
-create policy "allow anon full access"
+drop policy if exists "own milk_logs" on public.milk_logs;
+create policy "own milk_logs"
   on public.milk_logs
   for all
-  to anon
-  using (true)
-  with check (true);
+  to authenticated
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
 
 alter table public.app_settings enable row level security;
-
-drop policy if exists "allow anon full access" on public.app_settings;
-create policy "allow anon full access"
+drop policy if exists "own app_settings" on public.app_settings;
+create policy "own app_settings"
   on public.app_settings
   for all
-  to anon
-  using (true)
-  with check (true);
+  to authenticated
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);

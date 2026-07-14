@@ -1,7 +1,6 @@
 import { getLogsByDate } from "@/lib/queries";
-import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { formatDate, todayKey } from "@/lib/utils";
-import { PageHeader, SetupNotice } from "@/components/ui";
+import { PageHeader } from "@/components/ui";
 import HistoryNav from "@/components/HistoryNav";
 import LogList from "@/components/LogList";
 
@@ -22,8 +21,6 @@ export default async function HistoryPage({
   return (
     <div>
       <PageHeader title="Riwayat" subtitle={formatDate(`${selected}T00:00:00+07:00`)} />
-
-      {!isSupabaseConfigured && <SetupNotice />}
 
       <HistoryNav selected={selected} />
 

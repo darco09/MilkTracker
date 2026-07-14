@@ -50,17 +50,3 @@ export function EmptyState({ message }: { message: string }) {
     </div>
   );
 }
-
-export function SetupNotice() {
-  return (
-    <div className="mb-5 rounded-2xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-800">
-      <p className="font-semibold">💾 Mode lokal aktif</p>
-      <p className="mt-1 text-sky-700">
-        Data tersimpan di file{" "}
-        <code className="rounded bg-sky-100 px-1">.data/milk_logs.json</code> pada
-        komputer ini. Untuk pakai Supabase, isi{" "}
-        <code className="rounded bg-sky-100 px-1">.env.local</code> lalu restart server.
-      </p>
-    </div>
-  );
-}

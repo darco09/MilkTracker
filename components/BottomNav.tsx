@@ -36,6 +36,9 @@ const items = [
 export default function BottomNav() {
   const pathname = usePathname();
 
+  // Sembunyikan navigasi di halaman login
+  if (pathname.startsWith("/login")) return null;
+
   return (
     <nav className="fixed bottom-0 inset-x-0 z-40 border-t border-brand-100 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
       <div className="mx-auto flex max-w-md">

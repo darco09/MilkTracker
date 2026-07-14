@@ -1,7 +1,6 @@
 import { getWeeklyReport } from "@/lib/queries";
-import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { weekStartKey } from "@/lib/utils";
-import { PageHeader, SetupNotice } from "@/components/ui";
+import { PageHeader } from "@/components/ui";
 import ReportNav from "@/components/ReportNav";
 import ReportView from "@/components/ReportView";
 
@@ -20,8 +19,6 @@ export default async function ReportPage({
   return (
     <div>
       <PageHeader title="Laporan" subtitle="Ringkasan mingguan" />
-
-      {!isSupabaseConfigured && <SetupNotice />}
 
       <ReportNav week={selected} />
       <ReportView report={report} />

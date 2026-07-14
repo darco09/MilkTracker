@@ -3,6 +3,7 @@ export type FeedingStatus = "completed" | "partial" | "skipped";
 /** Merepresentasikan satu baris di table `milk_logs` */
 export interface MilkLog {
   id: string;
+  user_id: string;
   child_name: string;
   target_time: string; // ISO timestamptz
   actual_time: string; // ISO timestamptz
