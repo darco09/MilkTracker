@@ -10,6 +10,16 @@ const PUBLIC_PATHS = ["/login"];
  * - Sudah login + akses /login        -> redirect ke /
  */
 export async function updateSession(request: NextRequest) {
+  // Guard: tanpa kredensial Supabase, createServerClient akan throw dan
+  // membuat SELURUH situs 500 (MIDDLEWARE_INVOCATION_FAILED). Beri pesan jelas.
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    return new NextResponse(
+      "Konfigurasi belum lengkap: NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY " +
+        "belum di-set. Set Environment Variables di Vercel, lalu Redeploy tanpa build cache.",
+      { status: 503, headers: { "content-type": "text/plain; charset=utf-8" } }
+    );
+  }
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
