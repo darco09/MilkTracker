@@ -2,7 +2,10 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from "./config";
 
-const PUBLIC_PATHS = ["/login"];
+const PUBLIC_PATHS = ["/login", "/forgot-password", "/auth/callback"];
+// Rute yang tetap boleh diakses walau user sudah punya session
+// (mis. recovery session sementara dari link reset password).
+const AUTH_EXEMPT_PATHS = ["/reset-password"];
 
 /**
  * Refresh session tiap request & lindungi rute.
@@ -45,11 +48,16 @@ export async function updateSession(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
   const isPublic = PUBLIC_PATHS.some((p) => path.startsWith(p));
+  const isAuthExempt = AUTH_EXEMPT_PATHS.some((p) => path.startsWith(p));
 
-  if (!user && !isPublic) {
+  if (!user && !isPublic && !isAuthExempt) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
+  }
+
+  if (isAuthExempt) {
+    return response;
   }
 
   if (user && isPublic) {
