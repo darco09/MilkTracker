@@ -1,5 +1,6 @@
 import { getServerClient } from "./supabase/server";
-import type { MilkLog } from "@/types";
+import { DEFAULT_FEEDINGS_PER_DAY, DEFAULT_VOLUME_TARGET } from "./constants";
+import type { AppSettings, MilkLog } from "@/types";
 
 const TABLE = "milk_logs";
 const SETTINGS_TABLE = "app_settings";
@@ -87,17 +88,53 @@ export async function deleteLog(id: string): Promise<string | null> {
 
 /** Nama anak milik user, atau null bila belum diatur */
 export async function getChildName(): Promise<string | null> {
+  const settings = await getSettings();
+  return settings.child_name;
+}
+
+/** Seluruh pengaturan feeding milik user (nama anak, volume target, jumlah feeding/hari). */
+export async function getSettings(): Promise<AppSettings> {
   const supabase = await getServerClient();
   const { data, error } = await supabase
     .from(SETTINGS_TABLE)
-    .select("child_name")
+    .select("child_name, volume_target, feedings_per_day")
     .maybeSingle();
   if (error) {
-    console.error("getChildName:", error.message);
-    return null;
+    console.error("getSettings:", error.message);
   }
   const name = (data?.child_name as string | null)?.trim();
-  return name && name.length > 0 ? name : null;
+  return {
+    child_name: name && name.length > 0 ? name : null,
+    volume_target: data?.volume_target ?? DEFAULT_VOLUME_TARGET,
+    feedings_per_day: data?.feedings_per_day ?? DEFAULT_FEEDINGS_PER_DAY,
+  };
+}
+
+/** Simpan target volume & jumlah feeding/hari untuk user yang login. */
+export async function saveSettings(input: {
+  volume_target: number;
+  feedings_per_day: number;
+}): Promise<string | null> {
+  const supabase = await getServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return "Sesi tidak valid. Silakan login ulang.";
+
+  const { error } = await supabase.from(SETTINGS_TABLE).upsert(
+    {
+      user_id: user.id,
+      volume_target: input.volume_target,
+      feedings_per_day: input.feedings_per_day,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "user_id" }
+  );
+  if (error) {
+    console.error("saveSettings:", error.message);
+    return error.message;
+  }
+  return null;
 }
 
 /** Simpan nama anak untuk user yang login. */

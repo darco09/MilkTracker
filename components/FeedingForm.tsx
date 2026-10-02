@@ -2,16 +2,15 @@
 
 import { useState } from "react";
 import { createFeeding } from "@/lib/actions";
-import { VOLUME_TARGET } from "@/lib/constants";
 import { isoToLocalInput } from "@/lib/utils";
 import { Card } from "./ui";
 import FeedingFormCore, { type FeedingFormValues } from "./FeedingFormCore";
 
-function freshValues(): FeedingFormValues {
+function freshValues(volumeTarget: number): FeedingFormValues {
   return {
     actual_time: isoToLocalInput(new Date()),
     feeding_status: "completed",
-    volume_actual: VOLUME_TARGET,
+    volume_actual: volumeTarget,
     retention_checked: false,
     retention_volume: null,
     skip_reason: null,
@@ -19,7 +18,7 @@ function freshValues(): FeedingFormValues {
   };
 }
 
-export default function FeedingForm() {
+export default function FeedingForm({ volumeTarget }: { volumeTarget: number }) {
   const [open, setOpen] = useState(false);
   const [success, setSuccess] = useState(false);
 
@@ -48,7 +47,8 @@ export default function FeedingForm() {
         <h2 className="text-lg font-bold text-brand-800">Catat Feeding</h2>
       </div>
       <FeedingFormCore
-        initial={freshValues()}
+        initial={freshValues(volumeTarget)}
+        volumeTarget={volumeTarget}
         submitLabel="Simpan Feeding"
         pendingLabel="Menyimpan..."
         onSubmit={createFeeding}

@@ -3,20 +3,21 @@
 import { revalidatePath } from "next/cache";
 import {
   deleteLog,
-  getChildName,
+  getSettings,
   insertLog,
+  saveSettings,
   setChildName,
   updateLog,
   type NewMilkLog,
 } from "./repository";
 import { computeNextTime, localInputToIso } from "./utils";
-import { VOLUME_TARGET } from "./constants";
 import type { ActionResult, FeedingStatus } from "@/types";
 
 function revalidateAll() {
   revalidatePath("/");
   revalidatePath("/history");
   revalidatePath("/report");
+  revalidatePath("/settings");
 }
 
 /** Validasi payload sesuai aturan PRD, kembalikan pesan error atau null bila valid */
@@ -55,7 +56,9 @@ function validate(input: {
 /** Parse & validasi FormData feeding menjadi baris siap simpan */
 function parseFeedingForm(
   formData: FormData,
-  child_name: string
+  child_name: string,
+  volumeTarget: number,
+  feedingsPerDay: number
 ): { error: string } | { row: NewMilkLog } {
   const actual_local = String(formData.get("actual_time") ?? "");
   const feeding_status = String(
@@ -91,7 +94,7 @@ function parseFeedingForm(
   if (!actual_local) return { error: "Waktu feeding wajib diisi." };
 
   const actualIso = localInputToIso(actual_local);
-  const nextIso = computeNextTime(new Date(actualIso)).toISOString();
+  const nextIso = computeNextTime(new Date(actualIso), feedingsPerDay).toISOString();
 
   return {
     row: {
@@ -99,7 +102,7 @@ function parseFeedingForm(
       target_time: actualIso, // acuan jadwal = waktu mulai feeding
       actual_time: actualIso,
       next_time: nextIso,
-      volume_target: VOLUME_TARGET,
+      volume_target: volumeTarget,
       volume_actual,
       retention_checked,
       retention_volume,
@@ -112,10 +115,15 @@ function parseFeedingForm(
 
 /** Server Action: simpan satu feeding baru ke milk_logs */
 export async function createFeeding(formData: FormData): Promise<ActionResult> {
-  const childName = await getChildName();
-  if (!childName) return { ok: false, error: "Nama anak belum diatur." };
+  const settings = await getSettings();
+  if (!settings.child_name) return { ok: false, error: "Nama anak belum diatur." };
 
-  const parsed = parseFeedingForm(formData, childName);
+  const parsed = parseFeedingForm(
+    formData,
+    settings.child_name,
+    settings.volume_target,
+    settings.feedings_per_day
+  );
   if ("error" in parsed) return { ok: false, error: parsed.error };
 
   const error = await insertLog(parsed.row);
@@ -130,10 +138,15 @@ export async function updateFeeding(formData: FormData): Promise<ActionResult> {
   const id = String(formData.get("id") ?? "").trim();
   if (!id) return { ok: false, error: "ID data tidak valid." };
 
-  const childName = await getChildName();
-  if (!childName) return { ok: false, error: "Nama anak belum diatur." };
+  const settings = await getSettings();
+  if (!settings.child_name) return { ok: false, error: "Nama anak belum diatur." };
 
-  const parsed = parseFeedingForm(formData, childName);
+  const parsed = parseFeedingForm(
+    formData,
+    settings.child_name,
+    settings.volume_target,
+    settings.feedings_per_day
+  );
   if ("error" in parsed) return { ok: false, error: parsed.error };
 
   const error = await updateLog(id, parsed.row);
@@ -155,6 +168,31 @@ export async function deleteFeeding(id: string): Promise<ActionResult> {
 /** Server Action: simpan nama anak (setup awal / ubah nama) */
 export async function saveChildName(name: string): Promise<ActionResult> {
   const error = await setChildName(name);
+  if (error) return { ok: false, error };
+  revalidateAll();
+  return { ok: true };
+}
+
+/** Server Action: simpan target volume per feeding & jumlah feeding per hari */
+export async function saveFeedingSettings(formData: FormData): Promise<ActionResult> {
+  const volumeTarget = Number(formData.get("volume_target"));
+  const feedingsPerDay = Number(formData.get("feedings_per_day"));
+
+  if (!Number.isFinite(volumeTarget) || volumeTarget <= 0) {
+    return { ok: false, error: "Volume per feeding harus angka > 0." };
+  }
+  if (
+    !Number.isFinite(feedingsPerDay) ||
+    feedingsPerDay <= 0 ||
+    feedingsPerDay > 24
+  ) {
+    return { ok: false, error: "Jumlah feeding per hari harus antara 1-24." };
+  }
+
+  const error = await saveSettings({
+    volume_target: Math.round(volumeTarget),
+    feedings_per_day: Math.round(feedingsPerDay),
+  });
   if (error) return { ok: false, error };
   revalidateAll();
   return { ok: true };

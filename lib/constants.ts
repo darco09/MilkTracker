@@ -3,20 +3,20 @@
  */
 export const CHILD_NAME = "Ananda";
 
+/**
+ * Nilai default saat user belum pernah mengatur target feeding sendiri.
+ * Nilai aktual yang dipakai aplikasi diambil dari tabel app_settings
+ * (lihat lib/repository.ts -> getSettings), bisa diubah lewat halaman /settings.
+ */
+
 /** Target volume per sekali feeding (ml) */
-export const VOLUME_TARGET = 120;
+export const DEFAULT_VOLUME_TARGET = 150;
 
-/** Target volume harian (ml) — 8 feeding x 120 ml */
-export const DAILY_TARGET = 960;
-
-/** Jarak antar feeding (jam) */
-export const FEEDING_INTERVAL_HOURS = 3;
+/** Jumlah feeding per hari */
+export const DEFAULT_FEEDINGS_PER_DAY = 8;
 
 /** Estimasi durasi feeding (menit) */
 export const FEEDING_DURATION_MINUTES = 90;
-
-/** Jumlah feeding per hari */
-export const FEEDINGS_PER_DAY = DAILY_TARGET / VOLUME_TARGET;
 
 export const FEEDING_STATUS = {
   COMPLETED: "completed",

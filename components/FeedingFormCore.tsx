@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { VOLUME_TARGET } from "@/lib/constants";
 import { isoToLocalInput } from "@/lib/utils";
 import type { ActionResult, FeedingStatus, MilkLog } from "@/types";
 
@@ -37,6 +36,7 @@ export function logToFormValues(log: MilkLog): FeedingFormValues {
 
 export default function FeedingFormCore({
   initial,
+  volumeTarget,
   hiddenId,
   submitLabel,
   pendingLabel,
@@ -45,6 +45,7 @@ export default function FeedingFormCore({
   onCancel,
 }: {
   initial: FeedingFormValues;
+  volumeTarget: number;
   hiddenId?: string;
   submitLabel: string;
   pendingLabel: string;
@@ -101,7 +102,7 @@ export default function FeedingFormCore({
               onClick={() => {
                 setStatus(opt.value);
                 if (opt.value === "skipped") setVolume("0");
-                else if (volume === "0") setVolume(String(VOLUME_TARGET));
+                else if (volume === "0") setVolume(String(volumeTarget));
               }}
               className={`touch-target rounded-xl border text-sm font-semibold transition-colors ${
                 status === opt.value

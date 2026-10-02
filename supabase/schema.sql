@@ -40,14 +40,32 @@ create index if not exists milk_logs_user_time_idx
   on public.milk_logs (user_id, actual_time desc);
 
 -- ---------------------------------------------------------------------------
--- Pengaturan per user: nama anak (diisi sekali)
+-- Pengaturan per user: nama anak + target feeding (bisa diubah kapan saja)
 -- ---------------------------------------------------------------------------
 create table if not exists public.app_settings (
-  user_id    uuid primary key default auth.uid()
-               references auth.users (id) on delete cascade,
-  child_name text,
-  updated_at timestamptz not null default now()
+  user_id          uuid primary key default auth.uid()
+                     references auth.users (id) on delete cascade,
+  child_name       text,
+  volume_target    integer not null default 150 check (volume_target > 0),
+  feedings_per_day integer not null default 8
+                     check (feedings_per_day > 0 and feedings_per_day <= 24),
+  updated_at       timestamptz not null default now()
 );
+
+-- Migrasi kolom baru untuk database yang sudah ada sebelumnya
+alter table public.app_settings
+  add column if not exists volume_target integer not null default 150;
+alter table public.app_settings
+  add column if not exists feedings_per_day integer not null default 8;
+alter table public.app_settings
+  drop constraint if exists app_settings_volume_target_check;
+alter table public.app_settings
+  add constraint app_settings_volume_target_check check (volume_target > 0);
+alter table public.app_settings
+  drop constraint if exists app_settings_feedings_per_day_check;
+alter table public.app_settings
+  add constraint app_settings_feedings_per_day_check
+    check (feedings_per_day > 0 and feedings_per_day <= 24);
 
 -- ---------------------------------------------------------------------------
 -- Row Level Security: setiap user hanya melihat/mengubah barisnya sendiri

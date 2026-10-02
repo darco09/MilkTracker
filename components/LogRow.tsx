@@ -17,6 +17,7 @@ export default function LogRow({ log }: { log: MilkLog }) {
         <p className="mb-4 text-sm font-bold text-brand-800">Edit Feeding</p>
         <FeedingFormCore
           initial={logToFormValues(log)}
+          volumeTarget={log.volume_target}
           hiddenId={log.id}
           submitLabel="Simpan Perubahan"
           pendingLabel="Menyimpan..."

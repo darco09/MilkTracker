@@ -35,6 +35,13 @@ export interface ActionResult {
   error?: string;
 }
 
+/** Pengaturan feeding per user, tabel app_settings */
+export interface AppSettings {
+  child_name: string | null;
+  volume_target: number;
+  feedings_per_day: number;
+}
+
 /** Ringkasan progress harian untuk dashboard */
 export interface DailyProgress {
   totalActual: number;

@@ -1,13 +1,13 @@
-import { FEEDING_INTERVAL_HOURS, TIMEZONE } from "./constants";
+import { TIMEZONE } from "./constants";
 
 /** Tambahkan jam ke sebuah Date dan kembalikan Date baru */
 export function addHours(date: Date, hours: number): Date {
   return new Date(date.getTime() + hours * 60 * 60 * 1000);
 }
 
-/** next_time = actual_time + 3 jam (business rule) */
-export function computeNextTime(actualTime: Date): Date {
-  return addHours(actualTime, FEEDING_INTERVAL_HOURS);
+/** next_time = actual_time + jarak antar feeding (24 jam / jumlah feeding per hari) */
+export function computeNextTime(actualTime: Date, feedingsPerDay: number): Date {
+  return addHours(actualTime, 24 / feedingsPerDay);
 }
 
 /** Format jam:menit, contoh "14:30" (WIB) */

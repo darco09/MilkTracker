@@ -1,5 +1,5 @@
 import { getDailyProgress, getLastFeeding } from "@/lib/queries";
-import { getChildName } from "@/lib/repository";
+import { getSettings } from "@/lib/repository";
 import { getServerClient } from "@/lib/supabase/server";
 import { todayKey } from "@/lib/utils";
 import { PageHeader } from "@/components/ui";
@@ -19,7 +19,8 @@ export default async function DashboardPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const childName = await getChildName();
+  const settings = await getSettings();
+  const childName = settings.child_name;
 
   if (!childName) {
     return (
@@ -49,7 +50,7 @@ export default async function DashboardPage() {
       <DailyProgressCard progress={progress} />
       <CountdownCard nextTime={lastFeeding?.next_time ?? null} />
       <EditableLastFeeding log={lastFeeding} />
-      <FeedingForm />
+      <FeedingForm volumeTarget={settings.volume_target} />
     </div>
   );
 }

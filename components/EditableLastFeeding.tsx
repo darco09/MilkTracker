@@ -19,6 +19,7 @@ export default function EditableLastFeeding({ log }: { log: MilkLog | null }) {
         <h2 className="mb-4 text-lg font-bold text-brand-800">Edit Feeding</h2>
         <FeedingFormCore
           initial={logToFormValues(log)}
+          volumeTarget={log.volume_target}
           hiddenId={log.id}
           submitLabel="Simpan Perubahan"
           pendingLabel="Menyimpan..."

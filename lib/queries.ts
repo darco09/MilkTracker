@@ -1,5 +1,4 @@
-import { lastFeeding, logsByRange } from "./repository";
-import { DAILY_TARGET } from "./constants";
+import { getSettings, lastFeeding, logsByRange } from "./repository";
 import { dayRangeUtc, toDateKey, weekRangeUtc } from "./utils";
 import type { DailyProgress, MilkLog, WeeklyReport } from "@/types";
 
@@ -16,15 +15,19 @@ export async function getLogsByDate(dateKey: string): Promise<MilkLog[]> {
 
 /** Progress harian untuk sebuah date key */
 export async function getDailyProgress(dateKey: string): Promise<DailyProgress> {
-  const logs = await getLogsByDate(dateKey);
+  const [logs, settings] = await Promise.all([
+    getLogsByDate(dateKey),
+    getSettings(),
+  ]);
+  const dailyTarget = settings.volume_target * settings.feedings_per_day;
   const totalActual = logs.reduce((sum, l) => sum + (l.volume_actual ?? 0), 0);
   const completedCount = logs.filter((l) => l.feeding_status === "completed").length;
   const partialCount = logs.filter((l) => l.feeding_status === "partial").length;
   const skippedCount = logs.filter((l) => l.feeding_status === "skipped").length;
-  const percent = Math.min(100, Math.round((totalActual / DAILY_TARGET) * 100));
+  const percent = Math.min(100, Math.round((totalActual / dailyTarget) * 100));
   return {
     totalActual,
-    target: DAILY_TARGET,
+    target: dailyTarget,
     percent,
     feedingCount: logs.length,
     completedCount,
